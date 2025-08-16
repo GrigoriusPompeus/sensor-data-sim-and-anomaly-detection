@@ -13,6 +13,8 @@ A comprehensive Python-based sensor simulation framework with physics-based mode
 - **Humidity Sensor**: Psychrometric relationships using Magnus formula with temperature coupling
 - **Australian Climate Data**: Pre-configured settings for 10+ Australian cities with accurate parameters
 - **Realistic Characteristics**: Configurable noise, drift, calibration errors, and malfunction simulation
+- **Sensor Calibration**: Built-in calibration system with reference value correction and drift preservation
+- **Smart Sensor IDs**: Automatic normalization of sensor IDs (e.g., "Alice Springs" → "temp_alice_springs")
 
 ### Real-Time Anomaly Detection
 - **Rule-Based Thresholds**: Environmental alerts (frost < -5°C, heat > 30°C, extreme > 35°C, pressure < 950/> 1050 hPa)
@@ -159,6 +161,12 @@ python test_extreme_values.py
 
 # Test individual sensor creation
 python test_sensor.py
+
+# Test sensor calibration functionality
+python test_calibration.py
+
+# Test sensor ID normalization
+python test_sensor_ids.py
 ```
 
 ### Expected Test Results
@@ -167,12 +175,14 @@ python test_sensor.py
 - **Rules Test**: Confirms 7 active anomaly detection rules are working correctly
 - **Extreme Tests**: Validates system behavior under edge conditions
 - **Individual Tests**: Basic sensor creation and reading functionality
+- **Calibration Test**: Verifies sensor calibration accuracy and drift preservation
+- **Sensor ID Test**: Validates normalized sensor ID generation for cities with spaces
 
 ## 📊 Data Formats
 
 ### NDJSON Sensor Readings
 ```json
-{"value": 23.5, "timestamp": "2025-08-15T19:31:33.060167", "sensor_id": "temp_sydney", "sensor_type": "temperature", "quality": 0.99, "metadata": {"base_value": 23.48, "drift_applied": 0.02, "noise_level": 0.01}}
+{"value": 23.5, "timestamp": "2025-08-15T19:31:33.060167", "sensor_id": "temp_sydney", "sensor_type": "temperature", "quality": 0.99, "metadata": {"base_value": 23.48, "drift_applied": 0.02, "calibration_offset": 0.0, "noise_level": 0.01, "location": "Sydney"}}
 ```
 
 ### NDJSON Alert Format  
@@ -219,6 +229,27 @@ for reading_group in generator.stream_readings():
     pressure = reading_group['pressure'].value  
     humidity = reading_group['humidity'].value
     print(f"T:{temp:.1f}°C P:{pressure:.1f}hPa H:{humidity:.1f}%RH")
+```
+
+### Sensor Calibration
+```python
+from src.sensors import TemperatureSensor
+
+# Create and activate sensor
+sensor = TemperatureSensor(location="Melbourne")
+sensor.activate()
+
+# Take initial reading
+reading = sensor.read()
+print(f"Initial reading: {reading.value:.2f}°C")
+
+# Calibrate against known reference value
+reference_temperature = 25.0  # Known accurate reference
+sensor.calibrate(reference_value=reference_temperature, actual_value=reading.value)
+
+# Subsequent readings will be corrected
+corrected_reading = sensor.read()
+print(f"Calibrated reading: {corrected_reading.value:.2f}°C")
 ```
 
 ### Anomaly Detection
