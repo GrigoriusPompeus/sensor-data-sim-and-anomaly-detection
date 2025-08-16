@@ -104,6 +104,7 @@ class BaseSensor(ABC):
         self._drift_factor = 0.0
         self._noise_level = 0.01
         self._malfunction_probability = 0.0
+        self._calibration_offset = 0.0
         
         # Store additional parameters
         self._parameters = kwargs
@@ -178,26 +179,29 @@ class BaseSensor(ABC):
         
         return value + noise
     
-    def _apply_drift(self, value: float) -> float:
+    def _apply_drift(self, value: float, timestamp: Optional[datetime] = None) -> float:
         """
         Apply calibration drift to the sensor reading.
-        
+
         Args:
             value: The sensor value
-            
+            timestamp: Time of the reading (defaults to now)
+
         Returns:
             The value with drift applied
         """
         if self._drift_factor == 0:
             return value
-        
+
+        timestamp = timestamp or datetime.now()
+
         # Calculate drift based on time since calibration
-        time_since_calibration = datetime.now() - self.calibration_date
+        time_since_calibration = timestamp - self.calibration_date
         drift_days = time_since_calibration.total_seconds() / (24 * 3600)
-        
+
         # Apply linear drift
         drift_amount = self._drift_factor * drift_days * (self.range_max - self.range_min) / 100
-        
+
         return value + drift_amount
     
     def _check_malfunction(self) -> bool:
@@ -250,8 +254,9 @@ class BaseSensor(ABC):
         else:
             # Generate normal reading
             base_value = self._generate_base_value(timestamp)
-            value_with_drift = self._apply_drift(base_value)
-            value_with_noise = self._apply_noise(value_with_drift)
+            value_with_drift = self._apply_drift(base_value, timestamp)
+            value_with_offset = value_with_drift + self._calibration_offset
+            value_with_noise = self._apply_noise(value_with_offset)
             final_value = self._clamp_to_range(value_with_noise)
             
             # Calculate quality based on noise and drift
@@ -266,6 +271,7 @@ class BaseSensor(ABC):
                 metadata={
                     'base_value': base_value,
                     'drift_applied': value_with_drift - base_value,
+                    'calibration_offset': self._calibration_offset,
                     'noise_level': self._noise_level
                 }
             )
@@ -313,9 +319,15 @@ class BaseSensor(ABC):
             reference_value: The known true value
             actual_value: The value read by the sensor
         """
-        # Calculate and apply calibration offset
-        calibration_error = actual_value - reference_value
-        self._drift_factor = -calibration_error / (self.range_max - self.range_min) * 100
+        # Calculate current drift based on previous calibration
+        time_since_calibration = datetime.now() - self.calibration_date
+        drift_days = time_since_calibration.total_seconds() / (24 * 3600)
+        current_drift = (
+            self._drift_factor * drift_days * (self.range_max - self.range_min) / 100
+        )
+
+        # Apply calibration offset so future readings match the reference
+        self._calibration_offset += reference_value - (actual_value - current_drift)
         self.calibration_date = datetime.now()
     
     def get_info(self) -> Dict[str, Any]:
