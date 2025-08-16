@@ -30,8 +30,9 @@ def main():
     print("🚀 SENSOR SIMULATION & ANOMALY DETECTION SYSTEM DEMO")
     print("=" * 60)
     
-    # Change to the correct directory
-    os.chdir("/Users/grigorcrandon/sensor-sim")
+    # Change to repository root regardless of invocation location
+    repo_root = os.path.dirname(os.path.abspath(__file__))
+    os.chdir(repo_root)
     
     # Clean up any existing files
     if os.path.exists("data/readings.ndjson"):
