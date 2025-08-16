@@ -192,11 +192,15 @@ temp_sensor = TemperatureSensor(location="Melbourne")
 pressure_sensor = PressureSensor(location="Melbourne", altitude=31)
 humidity_sensor = HumiditySensor(location="Melbourne", location_type="urban")
 
+# Activate sensors before reading
+for sensor in (temp_sensor, pressure_sensor, humidity_sensor):
+    sensor.activate()
+
 # Generate readings
 timestamp = datetime.now()
-temp_reading = temp_sensor.generate_reading(timestamp)
-pressure_reading = pressure_sensor.generate_reading(timestamp)
-humidity_reading = humidity_sensor.generate_reading(timestamp)
+temp_reading = temp_sensor.read(timestamp)
+pressure_reading = pressure_sensor.read(timestamp)
+humidity_reading = humidity_sensor.read(timestamp)
 
 print(f"T:{temp_reading.value:.1f}°C P:{pressure_reading.value:.1f}hPa H:{humidity_reading.value:.1f}%RH")
 ```
