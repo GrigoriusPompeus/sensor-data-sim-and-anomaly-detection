@@ -43,20 +43,23 @@ class DataGenerator:
         """
         self.config = network_config or SensorNetwork()
         
+        # Normalise location for sensor IDs (e.g., "Alice Springs" -> "alice_springs")
+        location_slug = self.config.location.lower().replace(" ", "_")
+
         # Create coordinated sensors
         self.temperature_sensor = TemperatureSensor(
             location=self.config.location,
-            sensor_id=f"temp_{self.config.location.lower()}"
+            sensor_id=f"temp_{location_slug}"
         )
-        
+
         self.pressure_sensor = PressureSensor(
             altitude=self.config.altitude,
-            sensor_id=f"pressure_{self.config.location.lower()}"
+            sensor_id=f"pressure_{location_slug}"
         )
-        
+
         self.humidity_sensor = HumiditySensor(
             location_type=self.config.location_type,
-            sensor_id=f"humidity_{self.config.location.lower()}"
+            sensor_id=f"humidity_{location_slug}"
         )
         
         # Activate all sensors
