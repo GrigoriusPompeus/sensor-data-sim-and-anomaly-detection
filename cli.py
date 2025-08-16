@@ -54,6 +54,11 @@ def simulate_command(args):
             # Write each sensor reading as a separate NDJSON line
             for sensor_type, reading in reading_group.items():
                 if sensor_type != 'timestamp':  # Skip timestamp key
+                    # Add location metadata
+                    if not reading.metadata:
+                        reading.metadata = {}
+                    reading.metadata['location'] = args.location
+                    
                     # Create NDJSON line for this sensor reading
                     ndjson_data = reading.to_dict()
                     f.write(json.dumps(ndjson_data) + '\n')
@@ -147,22 +152,66 @@ def report_command(args):
             except (json.JSONDecodeError, KeyError, ValueError):
                 continue
     
-    # Load alerts if available
+    # Extract location from metadata if available
+    location = "Unknown"
+    if readings:
+        for reading in readings:
+            if reading.metadata and 'location' in reading.metadata:
+                location = reading.metadata['location']
+                break
+    
+    # Smart alerts handling - always generate fresh alerts for current data
     alerts = []
-    if os.path.exists(args.alerts_file):
-        with open(args.alerts_file, 'r') as f:
-            for line in f:
-                try:
-                    data = json.loads(line.strip())
-                    alert = Alert.from_dict(data)
-                    alerts.append(alert)
-                except (json.JSONDecodeError, KeyError, ValueError):
-                    continue
+    
+    # If specific alerts file provided, use it
+    if args.alerts_file != 'out/alerts.ndjson':
+        if os.path.exists(args.alerts_file):
+            print(f"Using specified alerts file: {args.alerts_file}")
+            with open(args.alerts_file, 'r') as f:
+                for line in f:
+                    try:
+                        data = json.loads(line.strip())
+                        alert = Alert.from_dict(data)
+                        alerts.append(alert)
+                    except (json.JSONDecodeError, KeyError, ValueError):
+                        continue
+        else:
+            print(f"Specified alerts file {args.alerts_file} not found.")
+    else:
+        # Always generate fresh alerts from the current data
+        location_safe = location.lower().replace(' ', '_')
+        auto_alerts_file = f"out/alerts_{location_safe}.ndjson"
+        
+        print(f"Generating fresh alerts from current data for {location}...")
+        
+        # Setup anomaly detection
+        alert_manager = AlertManager()
+        
+        # Add rule-based detector
+        rule_detector = RuleBasedDetector()
+        alert_manager.add_detector(rule_detector)
+        
+        # Add z-score detector
+        zscore_detector = ZScoreDetector(window_size=10, z_threshold=3.0)
+        alert_manager.add_detector(zscore_detector)
+        
+        # Process readings to generate alerts
+        for reading in readings:
+            detected_alerts = alert_manager.process_reading(reading)
+            alerts.extend(detected_alerts)
+        
+        # Save generated alerts
+        os.makedirs('out', exist_ok=True)
+        with open(auto_alerts_file, 'w') as f:
+            for alert in alerts:
+                f.write(json.dumps(alert.to_dict()) + '\n')
+        
+        print(f"Generated {len(alerts)} fresh alerts and saved to {auto_alerts_file}")
     
     # Generate statistics report
     stats_reporter = StatsReporter()
     stats_reporter.add_readings(readings)
-    stats_reporter.print_report()
+    stats_reporter.print_report(location=location)
     
     # Generate alerts summary
     if alerts:

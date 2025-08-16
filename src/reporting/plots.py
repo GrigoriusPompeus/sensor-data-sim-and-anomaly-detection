@@ -5,6 +5,7 @@ Plot generation for sensor data visualisation.
 from typing import List, Dict, Any, Optional
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+from matplotlib.lines import Line2D
 from datetime import datetime
 import os
 
@@ -90,6 +91,24 @@ class PlotGenerator:
             # Convert datetime to matplotlib format
             alert_time = mdates.date2num(alert.timestamp)
             ax.axvline(x=float(alert_time), color=color, linestyle='--', alpha=0.7, label=label)
+        
+        # Add comprehensive alert severity legend (even if no alerts present)
+        legend_elements = []
+        # Add sensor data to legend
+        legend_elements.append(Line2D([0], [0], color='blue', linewidth=1.5, label=f'{sensor_type.title()} Reading'))
+        
+        # Add all possible alert severities to legend
+        all_severities = [
+            ('Low Alert', 'yellow'),
+            ('Medium Alert', 'orange'), 
+            ('High Alert', 'red'),
+            ('Critical Alert', 'darkred')
+        ]
+        
+        for severity_name, color in all_severities:
+            legend_elements.append(Line2D([0], [0], color=color, linestyle='--', alpha=0.7, label=severity_name))
+        
+        ax.legend(handles=legend_elements, loc='upper right', bbox_to_anchor=(1, 1))
         
         # Format plot
         ax.set_xlabel('Time')
@@ -197,6 +216,18 @@ class PlotGenerator:
         
         # Overall title
         fig.suptitle(title, fontsize=14)
+        
+        # Add comprehensive legend for alert severities
+        legend_elements = [
+            Line2D([0], [0], color='blue', linewidth=1.5, label='Sensor Reading'),
+            Line2D([0], [0], color='yellow', linestyle='--', alpha=0.7, label='Low Alert'),
+            Line2D([0], [0], color='orange', linestyle='--', alpha=0.7, label='Medium Alert'),
+            Line2D([0], [0], color='red', linestyle='--', alpha=0.7, label='High Alert'),
+            Line2D([0], [0], color='darkred', linestyle='--', alpha=0.7, label='Critical Alert')
+        ]
+        
+        # Add legend to the figure
+        fig.legend(handles=legend_elements, loc='upper right', bbox_to_anchor=(0.98, 0.98))
         
         # Tight layout
         plt.tight_layout()
