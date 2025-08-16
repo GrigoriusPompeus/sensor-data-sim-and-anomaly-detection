@@ -7,8 +7,8 @@
 
 ```bash
 # Clone from GitHub
-git clone https://github.com/your-username/sensor-sim.git
-cd sensor-sim
+git clone git@github.com:GrigoriusPompeus/sensor-data-sim-and-anomaly-detection.git
+cd sensor-data-sim-and-anomaly-detection
 
 # Setup environment
 python -m venv .venv
@@ -28,10 +28,14 @@ python test_imports.py
 # Complete demo
 python demo.py
 
-# Generate data → Detect anomalies → Generate reports
+# Smart workflow (recommended) - auto-generates fresh alerts
+python cli.py simulate --duration 60 --location Brisbane --output data/brisbane.ndjson
+python cli.py report --data data/brisbane.ndjson --plot-sensor temp_brisbane
+
+# Legacy workflow - manual alert generation
 python cli.py simulate --duration 60 --location Brisbane
 python cli.py detect --z-threshold 2.5 --window-size 15  
-python cli.py report --plot-sensor temp_brisbane
+python cli.py report --alerts out/alerts.ndjson
 ```
 
 ## 📝 Command Reference
@@ -58,8 +62,14 @@ python cli.py detect [options]
 ```bash
 python cli.py report [options]
   --data FILE            # Sensor data (default: data/readings.ndjson)
-  --alerts FILE          # Alerts file (default: out/alerts.ndjson)
+  --alerts FILE          # Alerts file (default: auto-generated from data)
   --plot-sensor ID       # Single sensor plot (optional)
+
+# New smart features:
+# - Auto-detects location from data metadata
+# - Auto-generates fresh alerts if none specified  
+# - Color-coded terminal output with severity legend
+# - PNG plots include comprehensive alert severity legend
 ```
 
 ## 🧪 Testing
@@ -89,6 +99,20 @@ Sydney | Melbourne | Brisbane | Perth | Adelaide | Darwin | Hobart | Canberra
 - Pressure < 950 or > 1050 hPa (MEDIUM)
 - Humidity < 0% or > 100% (CRITICAL)
 - Z-score > threshold (LOW→CRITICAL based on magnitude)
+
+## 🎨 Alert Color Coding
+
+The system uses color-coded severity levels in reports:
+
+- **🟡 LOW (Yellow)** - Minor anomalies, statistical outliers
+- **🟠 MEDIUM (Orange)** - Moderate anomalies, environmental alerts  
+- **🔴 HIGH (Red)** - Significant anomalies, dangerous conditions
+- **🟣 CRITICAL (Magenta)** - Severe anomalies, system failures
+
+Colors appear in:
+- Alert summary tables
+- Severity breakdowns  
+- Recent alerts listings
 
 ---
 *Professional sensor simulation for IoT testing, algorithm development, and education*

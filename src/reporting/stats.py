@@ -111,13 +111,14 @@ class StatsReporter:
             'all_sensors': [stats.to_dict() for stats in self.sensor_stats.values()]
         }
     
-    def print_report(self):
+    def print_report(self, location: str = "Unknown"):
         """Print formatted statistics report to console."""
         report = self.generate_report()
         
         print("\n" + "="*60)
         print("SENSOR STATISTICS REPORT")
         print("="*60)
+        print(f"Location: {location}")
         
         summary = report['summary']
         print(f"Total Readings: {summary['total_readings']:,}")

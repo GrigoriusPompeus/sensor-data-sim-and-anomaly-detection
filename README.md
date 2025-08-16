@@ -21,23 +21,30 @@ A comprehensive Python-based sensor simulation framework with physics-based mode
 - **Stream Processing**: Memory-efficient detection for continuous monitoring
 
 ### Professional Reporting & Visualisation
-- **Statistical Reports**: Comprehensive sensor statistics (count, mean, min, max, standard deviation)
-- **Alert Summaries**: Breakdown by rule type, severity, and sensor with timeline analysis
+- **Statistical Reports**: Comprehensive sensor statistics with automatic location detection
+- **Color-Coded Alert Summaries**: Terminal output with severity color coding (Yellow/Orange/Red/Magenta)
+- **Dynamic Alert Generation**: Fresh alerts generated for each dataset, no stale cached data
 - **Timeline Plots**: 
   - Multi-sensor subplot visualisation with coordinated timelines
   - Single sensor detailed plots with alert markers
-  - PNG output with professional formatting
-- **Data Export**: NDJSON format for streaming integration and analysis
+  - PNG output with comprehensive severity legend
+  - Professional formatting with color-coded alert markers
+- **Data Export**: NDJSON format with location metadata for streaming integration
 
 ### Command Line Interface
 ```bash
-# Generate realistic sensor data
+# Generate realistic sensor data with location metadata
 python cli.py simulate --duration 60 --location Brisbane --interval 0.5
 
-# Detect anomalies with custom parameters
-python cli.py detect --input data/readings.ndjson --z-threshold 2.5 --window-size 15
+# Auto-generate fresh reports with dynamic location detection
+python cli.py report --data data/readings.ndjson
 
-# Generate comprehensive reports and visualisations
+# Generate specific city data with custom parameters  
+python cli.py simulate --duration 120 --location "Alice Springs" --interval 1.0 --output data/alice.ndjson
+python cli.py report --data data/alice.ndjson --plot-sensor temp_alice_springs
+
+# Legacy manual workflow (optional)
+python cli.py detect --input data/readings.ndjson --z-threshold 2.5 --window-size 15
 python cli.py report --data data/readings.ndjson --alerts out/alerts.ndjson
 ```
 
@@ -55,8 +62,8 @@ The system generates professional multi-sensor visualisations with alert markers
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/sensor-sim.git
-cd sensor-sim
+git clone git@github.com:GrigoriusPompeus/sensor-data-sim-and-anomaly-detection.git
+cd sensor-data-sim-and-anomaly-detection
 
 # Create virtual environment
 python -m venv .venv
@@ -105,22 +112,26 @@ python cli.py simulate --duration 120 --interval 0.5 --location Melbourne --outp
 # Available locations: Sydney, Melbourne, Brisbane, Perth, Adelaide, Darwin, Hobart, Canberra, Alice Springs, Cairns
 ```
 
-### 2. Anomaly Detection
+### 2. Smart Reporting (Recommended)
 ```bash
-# Basic detection
-python cli.py detect --input data/readings.ndjson
+# Auto-generate reports with fresh alerts (recommended workflow)
+python cli.py report --data data/readings.ndjson
 
-# Custom thresholds
-python cli.py detect --input data/readings.ndjson --z-threshold 2.0 --window-size 20 --output out/my_alerts.ndjson
+# Multi-city comparison
+python cli.py simulate --duration 60 --location Darwin --output data/darwin.ndjson
+python cli.py simulate --duration 60 --location Melbourne --output data/melbourne.ndjson
+python cli.py report --data data/darwin.ndjson      # Shows "Darwin" with tropical data
+python cli.py report --data data/melbourne.ndjson  # Shows "Melbourne" with temperate data
+
+# Single sensor focus
+python cli.py report --data data/readings.ndjson --plot-sensor temp_sydney
 ```
 
-### 3. Reporting & Visualisation
+### 3. Manual Anomaly Detection (Optional)
 ```bash
-# Generate all reports and multi-sensor plot
+# Manual detection workflow (alerts stored separately)
+python cli.py detect --input data/readings.ndjson --z-threshold 2.0 --window-size 20
 python cli.py report --data data/readings.ndjson --alerts out/alerts.ndjson
-
-# Include specific sensor detailed plot
-python cli.py report --data data/readings.ndjson --alerts out/alerts.ndjson --plot-sensor temp_sydney
 ```
 
 ## 🧪 Testing & Validation

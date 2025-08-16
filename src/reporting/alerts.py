@@ -70,8 +70,22 @@ class AlertSummary:
         }
     
     def print_summary(self):
-        """Print formatted alert summary to console."""
+        """Print formatted alert summary to console with color coding."""
         summary = self.generate_summary()
+        
+        # ANSI color codes
+        COLORS = {
+            'low': '\033[93m',      # Yellow
+            'medium': '\033[38;5;208m',  # Orange  
+            'high': '\033[91m',     # Red
+            'critical': '\033[95m', # Magenta
+            'reset': '\033[0m'      # Reset
+        }
+        
+        def colorize_severity(severity: str) -> str:
+            """Add color to severity text."""
+            color = COLORS.get(severity.lower(), COLORS['reset'])
+            return f"{color}{severity.upper()}{COLORS['reset']}"
         
         print("\n" + "="*60)
         print("ALERT SUMMARY REPORT")
@@ -83,11 +97,17 @@ class AlertSummary:
             print("No alerts generated.")
             return
         
-        # Severity breakdown
+        # Severity breakdown with colors and legend
         print("\nAlerts by Severity:")
         print("-" * 30)
+        print(f"  {COLORS['reset']}Legend: {COLORS['low']}●{COLORS['reset']} Low (Yellow)  "
+              f"{COLORS['medium']}●{COLORS['reset']} Medium (Orange)  "
+              f"{COLORS['high']}●{COLORS['reset']} High (Red)  "
+              f"{COLORS['critical']}●{COLORS['reset']} Critical (Magenta)")
+        print("-" * 30)
         for severity, count in summary['by_severity'].items():
-            print(f"  {severity.upper():<10}: {count:>3}")
+            colored_severity = colorize_severity(severity)
+            print(f"  {colored_severity:<20}: {count:>3}")
         
         # Rule breakdown
         print("\nAlerts by Rule:")
@@ -101,19 +121,20 @@ class AlertSummary:
         for sensor_type, count in summary['by_sensor_type'].items():
             print(f"  {sensor_type:<20}: {count:>3}")
         
-        # Recent alerts (last 10)
+        # Recent alerts (last 10) with color coding
         if summary['timeline']:
             print("\nRecent Alerts (last 10):")
             print("-" * 80)
-            print(f"{'Time':<20} {'Sensor':<15} {'Rule':<20} {'Severity':<10} {'Value':<10}")
+            print(f"{'Time':<20} {'Sensor':<15} {'Rule':<20} {'Severity':<20} {'Value':<10}")
             print("-" * 80)
             
             for alert in summary['timeline'][-10:]:
                 timestamp = alert['timestamp'].split('T')[1][:8]  # Just time part
+                colored_severity = colorize_severity(alert['severity'])
                 print(f"{timestamp:<20} "
                       f"{alert['sensor_id']:<15} "
                       f"{alert['rule_name']:<20} "
-                      f"{alert['severity']:<10} "
+                      f"{colored_severity:<30} "  # Extra space for color codes
                       f"{alert['value']:<10.2f}")
             
             print("-" * 80)
